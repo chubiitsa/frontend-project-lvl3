@@ -1,0 +1,15 @@
+env:
+  jest: true
+  node: true
+plugins:
+  - jest
+extends:
+  - airbnb-base
+parserOptions:
+  ecmaVersion: 2020
+  sourceType: module
+ignorePatterns: [/dist]
+rules:
+  no-console: 0
+  import/extensions: 0
+
