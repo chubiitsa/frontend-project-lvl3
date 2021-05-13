@@ -4,20 +4,41 @@
     <meta charset="utf-8">
     <title>RSS reader</title>
 </head>
-<body class="d-flex flex-column min-vh-100">
-
-<div class="container-fluid bg-dark p-5">
-    <form class="rss-form">
-        <div class="form-row">
-            <div class="form-group col">
-                <input type="text" class="form-control form-control-lg w-100" id="name" placeholder="ссылка RSS">
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-lg btn-primary px-sm-5">Add</button>
+<body class="d-flex flex-column min-vh-100 bg-secondary">
+<main class="flex-grow-1">
+    <div class="container-fluid bg-dark p-5">
+        <div class="col-md-10 col-lg-8 mx-auto text-white">
+            <h1 class="display-3">RSS агрегатор</h1>
+            <p class="lead">Всё интересное в одном месте</p>
+            <form class="rss-form">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <input type="text" class="form-control form-control-lg w-100 rss-link" name="name" id="name" placeholder="ссылка RSS">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button">Add</button>
+                    </div>
+                </div>
+            </form>
+            <small class="form-text text-muted">Пример: https://ru.hexlet.io/lessons.rss</small>
+        </div>
+    </div>
+    <div class="container-fluid p-5">
+        <div class="col-md-10 col-lg-8 mx-auto text-white">
+            <div class="row">
+                <div class="rounded-lg col-6 col-md-4 bg-info p-3">
+                    <h1>Фиды</h1>
+                    <p class="text-light">Здесь появятся списки ваших потоков</p>
+                    <ul class="list-group feeds-list"></ul>
+                </div>
+                <div class="rounded-lg bg-light text-dark col-md-10 col-lg-8 mx-auto p-3">
+                    <h1>Посты</h1>
+                    <p class="text-dark">Здесь появятся свежие новости с добавленных потоков</p>
+                    <ul class="list-group posts-list"></ul>
+                </div>
             </div>
         </div>
-    </form>
-    <small class="form-text text-muted">Пример: https://ru.hexlet.io/lessons.rss</small>
-</div>
+    </div>
+</main>
 </body>
 </html>
