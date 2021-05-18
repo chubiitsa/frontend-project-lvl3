@@ -2,20 +2,32 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import axios from 'axios';
 import * as yup from 'yup';
+import { setLocale } from 'yup';
+import i18next from 'i18next';
 import initView from './view.js';
+import resources from './translation/translation.json';
 
 const parser = new DOMParser();
 const makeCorrectLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(link)}`;
 
 const validate = (value, model) => {
+  setLocale({
+    mixed: {
+      required: i18next.t('errors.required'),
+    },
+    string: {
+      url: i18next.t('errors.invalidUrl'),
+    },
+  });
+
   const schema = yup
-    .string().url().required();
+    .string().required().url();
 
   const check1 = (url) => schema.validate(url);
   const check2 = (url) => axios.get(makeCorrectLink(url))
     .then(response => {
       if (!response.data.contents.includes('<?xml')) {
-        throw new Error('Ресурс не содержит валидный RSS');
+        throw new Error(i18next.t('errors.noRss'));
       } else {
         return value;
       }
@@ -29,7 +41,7 @@ const validate = (value, model) => {
 
 const sendRequest = (link) => axios.get(makeCorrectLink(link))
   .then(response => response.data.contents)
-  .catch(error => error.message);
+  .catch(error => error.message); // добавить обработку этих ошибок ( + перевод)
 
 const parseRSS = (rssString) => parser.parseFromString(rssString, 'application/xml');
 
@@ -52,7 +64,7 @@ const app = () => { // controller
       return new Promise((resolve = (v) => v, reject = (error) => error) => {
         this.feeds.forEach((feed) => {
           if (feed.link === url) {
-            reject(new Error('Этот поток уже есть в ленте'));
+            reject(new Error(i18next.t('errors.existedRss')));
           }
         });
         resolve(url);
@@ -101,4 +113,18 @@ const app = () => { // controller
   });
 };
 
-app();
+i18next.init({
+  lng: 'ru',
+  debug: true,
+  resources,
+}, () => {
+  document.getElementById('header').textContent = i18next.t('header');
+  document.getElementById('description').textContent = i18next.t('description');
+  document.getElementById('input-placeholder').setAttribute('placeholder', i18next.t('input-placeholder'));
+  document.getElementById('add-button').textContent = i18next.t('add-button');
+  document.getElementById('example').textContent = i18next.t('example');
+  document.getElementById('feeds-title').textContent = i18next.t('feeds-title');
+  document.getElementById('feeds-description').textContent = i18next.t('feeds-description');
+  document.getElementById('posts-title').textContent = i18next.t('posts-title');
+  document.getElementById('posts-description').textContent = i18next.t('posts-description');
+}).then(app());

@@ -1,4 +1,5 @@
 import onChange from 'on-change';
+import i18next from 'i18next';
 
 const renderError = (errorMessage, elements) => {
   const previousMessage = elements.form.nextSibling;
@@ -13,7 +14,7 @@ const renderError = (errorMessage, elements) => {
 
 const renderSuccessMessage = (elements) => {
   const successContainer = document.createElement('div');
-  successContainer.textContent = 'Поток успешно добавлен';
+  successContainer.textContent = i18next.t('messages.success');
   successContainer.classList.add('text-success');
   elements.form.after(successContainer);
 };
@@ -25,7 +26,7 @@ const renderItem = (node, elements) => {
   titleElement.textContent = title;
   const previewElement = document.createElement('a');
   previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewElement.textContent = 'Просмотр';
+  previewElement.textContent = i18next.t('preview-button');
   previewElement.setAttribute('href', link);
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');

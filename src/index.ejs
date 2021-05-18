@@ -8,32 +8,33 @@
 <main class="flex-grow-1">
     <div class="container-fluid bg-dark p-5">
         <div class="col-md-10 col-lg-8 mx-auto text-white">
-            <h1 class="display-3">RSS агрегатор</h1>
-            <p class="lead">Всё интересное в одном месте</p>
+            <h1 class="display-3" id="header">RSS агрегатор</h1>
+            <p class="lead" id="description">Всё интересное в одном месте</p>
             <form class="rss-form">
                 <div class="form-row">
                     <div class="form-group col">
-                        <input type="text" class="form-control form-control-lg w-100 rss-link" name="name" id="name" placeholder="ссылка RSS">
+                        <input type="text" class="form-control form-control-lg w-100 rss-link" name="name" id="input-placeholder" placeholder="ссылка RSS">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button">Add</button>
+                        <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button" id="add-button">Add</button>
                     </div>
                 </div>
             </form>
-            <small class="form-text text-muted">Пример: https://ru.hexlet.io/lessons.rss</small>
+            <p id='output'></p>
+            <small class="form-text text-muted" id="example">Пример: https://ru.hexlet.io/lessons.rss</small>
         </div>
     </div>
     <div class="container-fluid p-5">
         <div class="col-md-10 col-lg-8 mx-auto text-white">
             <div class="row">
                 <div class="rounded-lg col-6 col-md-4 bg-info p-3">
-                    <h1>Фиды</h1>
-                    <p class="text-light">Здесь появятся списки ваших потоков</p>
+                    <h1 id="feeds-title">Фиды</h1>
+                    <p class="text-light" id="feeds-description">Здесь появятся списки ваших потоков</p>
                     <ul class="list-group feeds-list"></ul>
                 </div>
                 <div class="rounded-lg bg-light text-dark col-md-10 col-lg-8 mx-auto p-3">
-                    <h1>Посты</h1>
-                    <p class="text-dark">Здесь появятся свежие новости с добавленных потоков</p>
+                    <h1 id="posts-title">Посты</h1>
+                    <p class="text-dark" id="posts-description">Здесь появятся свежие новости с добавленных потоков</p>
                     <ul class="list-group posts-list"></ul>
                 </div>
             </div>
