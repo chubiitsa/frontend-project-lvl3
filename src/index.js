@@ -8,7 +8,15 @@ import initView from './view.js';
 import resources from './translation/translation.json';
 
 const parser = new DOMParser();
-const makeCorrectLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(link)}`;
+const makeCorrectLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`;
+
+const elements = {
+  feedsBox: document.querySelector('.feeds-list'),
+  postsBox: document.querySelector('.posts-list'),
+  input: document.querySelector('.rss-link'),
+  form: document.querySelector('.rss-form'),
+  submitBtn: document.querySelector('.submit-button'),
+};
 
 const validate = (value, model) => {
   setLocale({
@@ -41,31 +49,47 @@ const validate = (value, model) => {
 
 const sendRequest = (link) => axios.get(makeCorrectLink(link))
   .then(response => response.data.contents)
-  .catch(error => error.message); // добавить обработку этих ошибок ( + перевод)
+  .catch(error => error.message);
 
 const parseRSS = (rssString) => parser.parseFromString(rssString, 'application/xml');
 
-const elements = {
-  feedsBox: document.querySelector('.feeds-list'),
-  postsBox: document.querySelector('.posts-list'),
-  input: document.querySelector('.rss-link'),
-  form: document.querySelector('.rss-form'),
-  submitBtn: document.querySelector('.submit-button'),
+const getFeedData = (rssData, model) => {
+  const { feedId } = model;
+  const title = rssData.querySelector('title').textContent;
+  const description = rssData.querySelector('description').textContent;
+  return {
+    feedId, title, description,
+  };
 };
 
-const app = () => { // controller
+const getPostsData = (rssData, feedId) => {
+  const rssPosts = rssData.querySelectorAll('item');
+  const posts = [];
+  let postId = 0;
+  rssPosts.forEach((node) => {
+    const postTitle = node.querySelector('title').textContent;
+    const link = node.querySelector('link').textContent;
+    postId += 1;
+    posts.push({
+      title: postTitle, link, postId, feedId,
+    });
+  });
+  return posts;
+};
+
+const app = () => {
   const model = {
     feeds: [],
+    posts: [],
     error: null,
     form: {
       status: 'filling',
     },
+    feedId: 0,
     isFeedExist(url) {
       return new Promise((resolve = (v) => v, reject = (error) => error) => {
         this.feeds.forEach((feed) => {
-          if (feed.link === url) {
-            reject(new Error(i18next.t('errors.existedRss')));
-          }
+          if (feed.link === url) reject(new Error(i18next.t('errors.existedRss')));
         });
         resolve(url);
       });
@@ -76,33 +100,44 @@ const app = () => { // controller
     e.preventDefault();
 
     const formData = new FormData(e.target);
-    const link = formData.get('name');
+    const value = formData.get('name');
     const watched = initView(model, elements);
 
-    validate(link, watched)
-      .then((value) => {
+    validate(value, watched)
+      .then((link) => {
         watched.form = {
           error: null,
         };
-        return value;
+        return link;
       })
       .catch((err) => {
         watched.form.status = 'failed';
-        watched.form = {
-          error: err.message,
-        };
+        if (err.message === 'Network Error') {
+          watched.error = i18next.t('errors.network');
+        } else {
+          watched.form = {
+            error: err.message,
+          };
+        }
         return err.message;
       })
-      .then((value) => {
-        if (watched.form.error) {
+      .then((link) => {
+        if (watched.form.error || watched.error) {
           return;
         }
         watched.form.status = 'loading';
-        sendRequest(value)
-          .then((data) => {
+        sendRequest(link)
+          .then((data) => parseRSS(data))
+          .then((rssData) => {
             watched.error = null;
-            const rssData = parseRSS(data);
-            watched.feeds.push({ link, data: rssData });
+            const feed = getFeedData(rssData, watched);
+            watched.feedId += 1;
+            watched.feeds.push({ link, ...feed });
+            const posts = getPostsData(rssData, feed.feedId);
+            return posts;
+          })
+          .then((posts) => {
+            watched.posts.push(...posts);
             watched.form.status = 'filling';
           })
           .catch((err) => {

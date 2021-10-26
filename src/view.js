@@ -19,36 +19,31 @@ const renderSuccessMessage = (elements) => {
   elements.form.after(successContainer);
 };
 
-const renderItem = (node, elements) => {
-  const title = node.querySelector('title').textContent;
-  const link = node.querySelector('link').textContent;
+const renderItem = (item, elements) => {
   const titleElement = document.createElement('p');
-  titleElement.textContent = title;
+  titleElement.textContent = item.title;
   const previewElement = document.createElement('a');
   previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
   previewElement.textContent = i18next.t('preview-button');
-  previewElement.setAttribute('href', link);
+  previewElement.setAttribute('href', item.link);
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
   postElement.append(titleElement, previewElement);
   elements.postsBox.append(postElement);
 };
 
+const renderPosts = (posts, elements) => posts.forEach((item) => renderItem(item, elements));
+
 const renderFeeds = (feeds, elements) => {
   elements.feedsBox.textContent = '';
   const feedNodes = feeds.map((feed) => {
-    const rssDocument = feed.data;
     const feedItem = document.createElement('li');
     const title = document.createElement('h3');
-    title.textContent = rssDocument.querySelector('title').textContent;
+    title.textContent = feed.title;
     const description = document.createElement('p');
-    description.textContent = rssDocument.querySelector('description').textContent;
+    description.textContent = feed.description;
     feedItem.classList.add('list-group-item', 'text-body');
     feedItem.append(title, description);
-
-    const rssPosts = rssDocument.querySelectorAll('item');
-    rssPosts.forEach((postItem) => renderItem(postItem, elements));
-
     return feedItem;
   });
   elements.feedsBox.append(...feedNodes);
@@ -87,6 +82,7 @@ const view = (state, elements) => {
     form: () => renderError(state.form.error, elements),
     error: () => renderError(state.error, elements),
     feeds: () => renderFeeds(state.feeds, elements),
+    posts: () => renderPosts(state.posts, elements),
   };
 
   return onChange(state, (path) => {
