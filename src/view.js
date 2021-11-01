@@ -51,6 +51,7 @@ const renderFeeds = (feeds, elements) => {
 };
 
 const renderForm = (state, elements) => {
+  console.log(state.form.status);
   switch (state.form.status) {
     case 'filling':
       elements.submitBtn.removeAttribute('disabled');
@@ -59,7 +60,7 @@ const renderForm = (state, elements) => {
       break;
 
     case 'failed':
-      elements.input.classList.add('is-invalid');
+      elements.input.classList.add('is-invalid', 'form-control');
       elements.submitBtn.removeAttribute('disabled');
       elements.input.removeAttribute('disabled');
       elements.input.select();
@@ -80,7 +81,7 @@ const view = (state, elements) => {
   const mapping = {
     'form.status': () => renderForm(state, elements),
     form: () => renderError(state.form.error, elements),
-    error: () => renderError(state.error, elements),
+    error: () => renderError(state.loadingProcess.error, elements),
     feeds: () => renderFeeds(state.feeds, elements),
     posts: () => renderPosts(state.posts, elements),
   };

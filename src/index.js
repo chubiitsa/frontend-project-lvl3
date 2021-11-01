@@ -6,9 +6,16 @@ import { setLocale } from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
 import resources from './translation/translation.json';
+import { getFeedData, getPostsData, parseRSS } from "./parse.js";
 
-const parser = new DOMParser();
-const makeCorrectLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?disableCache=true&url=${encodeURIComponent(link)}`;
+
+const addProxy = (url) => {
+  const proxy = 'https://hexlet-allorigins.herokuapp.com/';
+  const urlWithProxy = new URL('get', proxy);
+  urlWithProxy.searchParams.append('disableCache', true);
+  urlWithProxy.searchParams.append('url', url);
+  return urlWithProxy;
+};
 
 const elements = {
   feedsBox: document.querySelector('.feeds-list'),
@@ -31,11 +38,14 @@ const validate = (value, model) => {
   const schema = yup
     .string().required().url();
 
-  const check1 = (url) => schema.validate(url);
-  const check2 = (url) => axios.get(makeCorrectLink(url))
+  const check1 = (value) => schema.validate(value);
+  const check2 = (value) => axios.get(addProxy(value))
     .then(response => {
       if (!response.data.contents.includes('<?xml')) {
-        throw new Error(i18next.t('errors.noRss'));
+        model.form = {
+          status: 'failed',
+        }
+       throw new Error(i18next.t('errors.noRss'));
       } else {
         return value;
       }
@@ -47,45 +57,25 @@ const validate = (value, model) => {
     .then(value3 => check3(value3));
 };
 
-const sendRequest = (link) => axios.get(makeCorrectLink(link))
+const sendRequest = (link) => axios.get(addProxy(link))
   .then(response => response.data.contents)
   .catch(error => error.message);
-
-const parseRSS = (rssString) => parser.parseFromString(rssString, 'application/xml');
-
-const getFeedData = (rssData, model) => {
-  const { feedId } = model;
-  const title = rssData.querySelector('title').textContent;
-  const description = rssData.querySelector('description').textContent;
-  return {
-    feedId, title, description,
-  };
-};
-
-const getPostsData = (rssData, feedId) => {
-  const rssPosts = rssData.querySelectorAll('item');
-  const posts = [];
-  let postId = 0;
-  rssPosts.forEach((node) => {
-    const postTitle = node.querySelector('title').textContent;
-    const link = node.querySelector('link').textContent;
-    postId += 1;
-    posts.push({
-      title: postTitle, link, postId, feedId,
-    });
-  });
-  return posts;
-};
 
 const app = () => {
   const model = {
     feeds: [],
     posts: [],
     error: null,
-    form: {
-      status: 'filling',
+    loadingProcess : {
+      status: 'idle', // loading, failed
+      error: null,
     },
-    feedId: 0,
+    form: {
+      error: null,
+      status: 'filling', // validating, failed
+      valid: false,
+    },
+    getFeedId: () => _.uniqueId('feed_'),
     isFeedExist(url) {
       return new Promise((resolve = (v) => v, reject = (error) => error) => {
         this.feeds.forEach((feed) => {
@@ -111,10 +101,13 @@ const app = () => {
         return link;
       })
       .catch((err) => {
-        watched.form.status = 'failed';
         if (err.message === 'Network Error') {
-          watched.error = i18next.t('errors.network');
-        } else {
+          watched.loadingProcess = {
+            error: i18next.t('errors.network'),
+            status: 'failed',
+          }
+        }
+        else {
           watched.form = {
             error: err.message,
           };
@@ -122,19 +115,18 @@ const app = () => {
         return err.message;
       })
       .then((link) => {
-        if (watched.form.error || watched.error) {
+        if (watched.form.error || watched.loadingProcess.error) {
           return;
         }
-        watched.form.status = 'loading';
+        watched.loadingProcess.status = 'loading';
         sendRequest(link)
           .then((data) => parseRSS(data))
           .then((rssData) => {
-            watched.error = null;
+            watched.loadingProcess.error = null;
             const feed = getFeedData(rssData, watched);
-            watched.feedId += 1;
-            watched.feeds.push({ link, ...feed });
-            const posts = getPostsData(rssData, feed.feedId);
-            return posts;
+            const feedId = watched.getFeedId();
+            watched.feeds.push({ link, feedId, ...feed });
+            return getPostsData(rssData, feedId);
           })
           .then((posts) => {
             watched.posts.push(...posts);
@@ -142,7 +134,7 @@ const app = () => {
           })
           .catch((err) => {
             watched.form.status = 'failed';
-            watched.error = err.message;
+            watched.loadingProcess.error = err.message;
           });
       });
   });
