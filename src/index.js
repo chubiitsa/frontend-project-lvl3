@@ -6,7 +6,7 @@ import { setLocale } from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
 import resources from './translation/translation.json';
-import { getFeedData, getPostsData, parseRSS } from "./parse.js";
+import { getFeedData, getPostsData, parseRSS } from './parse.js';
 
 const addProxy = (url) => {
   const proxy = 'https://hexlet-allorigins.herokuapp.com/';
@@ -49,21 +49,20 @@ const validate = (value, model) => {
 };
 
 const sendRequest = (link) => axios.get(addProxy(link))
-  .then(response => response.data.contents)
-  .catch(error => error.message);
+  .then(response => response.data.contents);
 
 const app = () => {
   const model = {
     feeds: [],
     posts: [],
     error: null,
-    loadingProcess : {
+    loadingProcess: {
       status: 'idle', // loading, failed
       error: null,
     },
     form: {
-      error: null,
       status: 'filling', // read-only
+      error: null,
     },
     getFeedId: () => _.uniqueId('feed_'),
     getFeedsArray() {
@@ -100,11 +99,12 @@ const app = () => {
       .then((posts) => {
         watched.posts.push(...posts);
         watched.form.status = 'filling';
+        watched.loadingProcess.status = 'idle';
       })
-      .catch((err) => {
+      .catch(() => {
         watched.form.status = 'filling';
         watched.loadingProcess.status = 'failed';
-        watched.loadingProcess.error = err.message;
+        watched.loadingProcess.error = i18next.t('errors.network');
       });
   });
 };
@@ -117,7 +117,7 @@ i18next.init({
   document.getElementById('header').textContent = i18next.t('header');
   document.getElementById('description').textContent = i18next.t('description');
   document.getElementById('input-placeholder').setAttribute('placeholder', i18next.t('input-placeholder'));
-  document.getElementById('add-button').textContent = i18next.t('add-button');
+  document.getElementById('add-button').textContent = i18next.t('buttons.add');
   document.getElementById('example').textContent = i18next.t('example');
   document.getElementById('feeds-title').textContent = i18next.t('feeds-title');
   document.getElementById('feeds-description').textContent = i18next.t('feeds-description');

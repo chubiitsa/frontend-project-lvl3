@@ -10,21 +10,30 @@ const renderError = (errorMessage, elements) => {
   errorContainer.classList.add('text-danger');
   errorContainer.textContent = errorMessage;
   elements.form.after(errorContainer);
-
   elements.input.classList.add('is-invalid', 'form-control');
   elements.input.select();
-
 };
 
-const renderSuccessMessage = (elements) => {
+const renderProgressMessage = (state, elements) => {
   const previousMessage = elements.form.nextSibling;
   if (previousMessage) {
     previousMessage.remove();
   }
-  const successContainer = document.createElement('div');
-  successContainer.textContent = i18next.t('messages.success');
-  successContainer.classList.add('text-success');
-  elements.form.after(successContainer);
+  const messageContainer = document.createElement('div');
+  switch (state) {
+    case 'loading':
+      messageContainer.textContent = i18next.t('messages.progress');
+      messageContainer.classList.add('text-info');
+      break;
+    case 'idle':
+      messageContainer.textContent = i18next.t('messages.success');
+      messageContainer.classList.add('text-success');
+      break;
+
+    default:
+      throw Error(`Unknown form status: ${state}`);
+  }
+  elements.form.after(messageContainer);
 };
 
 const renderItem = (item, elements) => {
@@ -32,7 +41,7 @@ const renderItem = (item, elements) => {
   titleElement.textContent = item.title;
   const previewElement = document.createElement('a');
   previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewElement.textContent = i18next.t('preview-button');
+  previewElement.textContent = i18next.t('buttons.preview');
   previewElement.setAttribute('href', item.link);
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
@@ -55,7 +64,6 @@ const renderFeeds = (feeds, elements) => {
     return feedItem;
   });
   elements.feedsBox.append(...feedNodes);
-  renderSuccessMessage(elements);
 };
 
 const renderForm = (state, elements) => {
@@ -81,7 +89,8 @@ const view = (state, elements) => {
   const mapping = {
     'form.status': () => renderForm(state, elements),
     'form.error': () => renderError(state.form.error, elements),
-    error: () => renderError(state.loadingProcess.error, elements),
+    'loadingProcess.error': () => renderError(state.loadingProcess.error, elements),
+    'loadingProcess.status': () => renderProgressMessage(state.loadingProcess.status, elements),
     feeds: () => renderFeeds(state.feeds, elements),
     posts: () => renderPosts(state.posts, elements),
   };

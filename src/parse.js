@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 const parser = new window.DOMParser();
 
@@ -26,4 +26,6 @@ const getPostsData = (rssData, feedId) => {
   return posts;
 };
 
-export { getFeedData, getPostsData, parseRSS };
+export {
+  getFeedData, getPostsData, parser, parseRSS,
+};

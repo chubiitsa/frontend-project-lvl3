@@ -4,22 +4,26 @@
       "header": "RSS reader",
       "description": "All that you want in one place",
       "input-placeholder": "Put URL here",
-      "add-button": "Add",
       "example": "Example: https://ru.hexlet.io/lessons.rss",
       "feeds-title": "Feeds",
       "feeds-description": "List of feeds",
       "posts-title": "Posts",
       "posts-description": "List of related posts",
+      "buttons": {
+        "add": "Add",
+        "preview": "Quick view"
+      },
       "errors": {
         "noRss": "There is no RSS-feed at this URL",
         "existedRss": "This feed is already here (please find it below)",
         "required": "Please fill in this field",
-        "invalidUrl": "The value is not URL"
+        "invalidUrl": "The value is not URL",
+        "network": "Network error. Try again later"
       },
       "messages": {
-        "success": "Feed was successfully added"
-      },
-      "preview-button": "Quick view"
+        "success": "Feed was successfully added",
+        "progress": "Loading ..."
+      }
     }
   },
   "ru": {
@@ -27,22 +31,26 @@
       "header": "RSS агрегатор",
       "description": "Всё интересное в одном месте",
       "input-placeholder": "ссылка RSS",
-      "add-button": "Добавить",
       "example": "Пример: https://ru.hexlet.io/lessons.rss",
       "feeds-title": "Фиды",
       "feeds-description": "Здесь появятся списки ваших потоков",
       "posts-title": "Посты",
       "posts-description": "Здесь появятся свежие новости с добавленных потоков",
+      "buttons": {
+        "add": "Добавить",
+        "preview": "Просмотр"
+      },
       "errors": {
         "noRss": "Ресурс не содержит валидный RSS",
         "existedRss": "Этот поток уже есть в ленте",
         "required": "Заполните это поле",
-        "invalidUrl": "Введенное значение не является ссылкой"
+        "invalidUrl": "Введенное значение не является ссылкой",
+        "network": "Ошибка соединения. Попробуйте повторить запрос позднее"
       },
       "messages": {
-        "success": "Поток успешно добавлен"
-      },
-      "preview-button": "Просмотр"
+        "success": "Поток успешно добавлен",
+        "progress": "Идет загрузка ..."
+      }
     }
   }
 }
