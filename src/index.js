@@ -8,7 +8,6 @@ import initView from './view.js';
 import resources from './translation/translation.json';
 import { getFeedData, getPostsData, parseRSS } from "./parse.js";
 
-
 const addProxy = (url) => {
   const proxy = 'https://hexlet-allorigins.herokuapp.com/';
   const urlWithProxy = new URL('get', proxy);
@@ -29,32 +28,24 @@ const validate = (value, model) => {
   setLocale({
     mixed: {
       required: i18next.t('errors.required'),
+      notOneOf: i18next.t('errors.existedRss'),
     },
     string: {
       url: i18next.t('errors.invalidUrl'),
     },
   });
 
+  const existedFeeds = model.getFeedsArray();
+
   const schema = yup
-    .string().required().url();
+    .string().required().url().notOneOf(existedFeeds);
 
-  const check1 = (value) => schema.validate(value);
-  const check2 = (value) => axios.get(addProxy(value))
-    .then(response => {
-      if (!response.data.contents.includes('<?xml')) {
-        model.form = {
-          status: 'failed',
-        }
-       throw new Error(i18next.t('errors.noRss'));
-      } else {
-        return value;
-      }
-    });
-  const check3 = (url) => model.isFeedExist(url);
-
-  return check1(value)
-    .then(value2 => check2(value2))
-    .then(value3 => check3(value3));
+  try {
+    schema.validateSync(value);
+    return null;
+  } catch (err) {
+    return err.message;
+  }
 };
 
 const sendRequest = (link) => axios.get(addProxy(link))
@@ -72,17 +63,11 @@ const app = () => {
     },
     form: {
       error: null,
-      status: 'filling', // validating, failed
-      valid: false,
+      status: 'filling', // read-only
     },
     getFeedId: () => _.uniqueId('feed_'),
-    isFeedExist(url) {
-      return new Promise((resolve = (v) => v, reject = (error) => error) => {
-        this.feeds.forEach((feed) => {
-          if (feed.link === url) reject(new Error(i18next.t('errors.existedRss')));
-        });
-        resolve(url);
-      });
+    getFeedsArray() {
+      return this.feeds.map((feed) => feed.value);
     },
   };
 
@@ -93,49 +78,33 @@ const app = () => {
     const value = formData.get('name');
     const watched = initView(model, elements);
 
-    validate(value, watched)
-      .then((link) => {
-        watched.form = {
-          error: null,
-        };
-        return link;
+    const error = validate(value, watched);
+
+    if (error) {
+      watched.form.error = error;
+      return;
+    }
+
+    watched.form.status = 'read-only';
+    watched.loadingProcess.status = 'loading';
+
+    sendRequest(value)
+      .then((data) => parseRSS(data))
+      .then((rssData) => {
+        watched.loadingProcess.error = null;
+        const feed = getFeedData(rssData, watched);
+        const feedId = watched.getFeedId();
+        watched.feeds.push({ value, feedId, ...feed });
+        return getPostsData(rssData, feedId);
+      })
+      .then((posts) => {
+        watched.posts.push(...posts);
+        watched.form.status = 'filling';
       })
       .catch((err) => {
-        if (err.message === 'Network Error') {
-          watched.loadingProcess = {
-            error: i18next.t('errors.network'),
-            status: 'failed',
-          }
-        }
-        else {
-          watched.form = {
-            error: err.message,
-          };
-        }
-        return err.message;
-      })
-      .then((link) => {
-        if (watched.form.error || watched.loadingProcess.error) {
-          return;
-        }
-        watched.loadingProcess.status = 'loading';
-        sendRequest(link)
-          .then((data) => parseRSS(data))
-          .then((rssData) => {
-            watched.loadingProcess.error = null;
-            const feed = getFeedData(rssData, watched);
-            const feedId = watched.getFeedId();
-            watched.feeds.push({ link, feedId, ...feed });
-            return getPostsData(rssData, feedId);
-          })
-          .then((posts) => {
-            watched.posts.push(...posts);
-            watched.form.status = 'filling';
-          })
-          .catch((err) => {
-            watched.form.status = 'failed';
-            watched.loadingProcess.error = err.message;
-          });
+        watched.form.status = 'filling';
+        watched.loadingProcess.status = 'failed';
+        watched.loadingProcess.error = err.message;
       });
   });
 };

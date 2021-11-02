@@ -10,9 +10,17 @@ const renderError = (errorMessage, elements) => {
   errorContainer.classList.add('text-danger');
   errorContainer.textContent = errorMessage;
   elements.form.after(errorContainer);
+
+  elements.input.classList.add('is-invalid', 'form-control');
+  elements.input.select();
+
 };
 
 const renderSuccessMessage = (elements) => {
+  const previousMessage = elements.form.nextSibling;
+  if (previousMessage) {
+    previousMessage.remove();
+  }
   const successContainer = document.createElement('div');
   successContainer.textContent = i18next.t('messages.success');
   successContainer.classList.add('text-success');
@@ -51,7 +59,6 @@ const renderFeeds = (feeds, elements) => {
 };
 
 const renderForm = (state, elements) => {
-  console.log(state.form.status);
   switch (state.form.status) {
     case 'filling':
       elements.submitBtn.removeAttribute('disabled');
@@ -59,14 +66,7 @@ const renderForm = (state, elements) => {
       elements.input.value = '';
       break;
 
-    case 'failed':
-      elements.input.classList.add('is-invalid', 'form-control');
-      elements.submitBtn.removeAttribute('disabled');
-      elements.input.removeAttribute('disabled');
-      elements.input.select();
-      break;
-
-    case 'loading':
+    case 'read-only':
       elements.submitBtn.setAttribute('disabled', true);
       elements.input.classList.remove('is-invalid');
       elements.input.setAttribute('disabled', true);
@@ -80,7 +80,7 @@ const renderForm = (state, elements) => {
 const view = (state, elements) => {
   const mapping = {
     'form.status': () => renderForm(state, elements),
-    form: () => renderError(state.form.error, elements),
+    'form.error': () => renderError(state.form.error, elements),
     error: () => renderError(state.loadingProcess.error, elements),
     feeds: () => renderFeeds(state.feeds, elements),
     posts: () => renderPosts(state.posts, elements),
