@@ -6,7 +6,7 @@ import { setLocale } from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
 import resources from './translation/translation.json';
-import { getFeedData, getPostsData, parseRSS } from './parse.js';
+import parse from './parse.js';
 
 const addProxy = (url) => {
   const proxy = 'https://hexlet-allorigins.herokuapp.com/';
@@ -61,12 +61,11 @@ const app = () => {
       error: null,
     },
     form: {
-      status: 'filling', // read-only
+      status: 'filling', // read-only, failed
       error: null,
     },
-    getFeedId: () => _.uniqueId('feed_'),
     getFeedsArray() {
-      return this.feeds.map((feed) => feed.value);
+      return this.feeds.map((feed) => feed.id);
     },
   };
 
@@ -81,6 +80,7 @@ const app = () => {
 
     if (error) {
       watched.form.error = error;
+      watched.form.status = 'failed';
       return;
     }
 
@@ -88,23 +88,25 @@ const app = () => {
     watched.loadingProcess.status = 'loading';
 
     sendRequest(value)
-      .then((data) => parseRSS(data))
-      .then((rssData) => {
+      .then((data) => {
+        const feedData = parse(data);
+        const { title, description, posts } = feedData;
+        watched.feeds.push({ id: value, title, description });
+        const postsWithFeedId = posts.map((post) => ({ feedId: value, ...post }));
+        [...watched.posts] = [...postsWithFeedId];
         watched.loadingProcess.error = null;
-        const feed = getFeedData(rssData, watched);
-        const feedId = watched.getFeedId();
-        watched.feeds.push({ value, feedId, ...feed });
-        return getPostsData(rssData, feedId);
-      })
-      .then((posts) => {
-        watched.posts.push(...posts);
+        watched.form.error = null;
         watched.form.status = 'filling';
         watched.loadingProcess.status = 'idle';
       })
-      .catch(() => {
-        watched.form.status = 'filling';
+      .catch((err) => {
+        if (err.message === 'parsingError') {
+          watched.loadingProcess.error = i18next.t('errors.noRss');
+        } else {
+          watched.loadingProcess.error = i18next.t('errors.network');
+        }
         watched.loadingProcess.status = 'failed';
-        watched.loadingProcess.error = i18next.t('errors.network');
+        watched.form.status = 'failed';
       });
   });
 };

@@ -20,20 +20,24 @@ const renderProgressMessage = (state, elements) => {
     previousMessage.remove();
   }
   const messageContainer = document.createElement('div');
-  switch (state) {
+  switch (state.loadingProcess.status) {
     case 'loading':
       messageContainer.textContent = i18next.t('messages.progress');
       messageContainer.classList.add('text-info');
+      elements.form.after(messageContainer);
       break;
     case 'idle':
       messageContainer.textContent = i18next.t('messages.success');
       messageContainer.classList.add('text-success');
+      elements.form.after(messageContainer);
+      break;
+    case 'failed':
+      renderError(state.loadingProcess.error, elements);
       break;
 
     default:
       throw Error(`Unknown form status: ${state}`);
   }
-  elements.form.after(messageContainer);
 };
 
 const renderItem = (item, elements) => {
@@ -71,6 +75,7 @@ const renderForm = (state, elements) => {
     case 'filling':
       elements.submitBtn.removeAttribute('disabled');
       elements.input.removeAttribute('disabled');
+      elements.input.classList.remove('is-invalid');
       elements.input.value = '';
       break;
 
@@ -78,6 +83,13 @@ const renderForm = (state, elements) => {
       elements.submitBtn.setAttribute('disabled', true);
       elements.input.classList.remove('is-invalid');
       elements.input.setAttribute('disabled', true);
+      break;
+
+    case 'failed':
+      elements.input.classList.add('is-invalid');
+      elements.submitBtn.removeAttribute('disabled');
+      elements.input.removeAttribute('disabled');
+      elements.input.focus();
       break;
 
     default:
@@ -89,8 +101,7 @@ const view = (state, elements) => {
   const mapping = {
     'form.status': () => renderForm(state, elements),
     'form.error': () => renderError(state.form.error, elements),
-    'loadingProcess.error': () => renderError(state.loadingProcess.error, elements),
-    'loadingProcess.status': () => renderProgressMessage(state.loadingProcess.status, elements),
+    'loadingProcess.status': () => renderProgressMessage(state, elements),
     feeds: () => renderFeeds(state.feeds, elements),
     posts: () => renderPosts(state.posts, elements),
   };
