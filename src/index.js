@@ -6,44 +6,15 @@ import { setLocale } from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
 import resources from './translation/translation.json';
+import parse from './parse.js';
 
-const parser = new DOMParser();
-const makeCorrectLink = (link) => `https://hexlet-allorigins.herokuapp.com/get?url=${encodeURIComponent(link)}`;
-
-const validate = (value, model) => {
-  setLocale({
-    mixed: {
-      required: i18next.t('errors.required'),
-    },
-    string: {
-      url: i18next.t('errors.invalidUrl'),
-    },
-  });
-
-  const schema = yup
-    .string().required().url();
-
-  const check1 = (url) => schema.validate(url);
-  const check2 = (url) => axios.get(makeCorrectLink(url))
-    .then(response => {
-      if (!response.data.contents.includes('<?xml')) {
-        throw new Error(i18next.t('errors.noRss'));
-      } else {
-        return value;
-      }
-    });
-  const check3 = (url) => model.isFeedExist(url);
-
-  return check1(value)
-    .then(value2 => check2(value2))
-    .then(value3 => check3(value3));
+const addProxy = (url) => {
+  const proxy = 'https://hexlet-allorigins.herokuapp.com/';
+  const urlWithProxy = new URL('get', proxy);
+  urlWithProxy.searchParams.append('disableCache', true);
+  urlWithProxy.searchParams.append('url', url);
+  return urlWithProxy;
 };
-
-const sendRequest = (link) => axios.get(makeCorrectLink(link))
-  .then(response => response.data.contents)
-  .catch(error => error.message); // добавить обработку этих ошибок ( + перевод)
-
-const parseRSS = (rssString) => parser.parseFromString(rssString, 'application/xml');
 
 const elements = {
   feedsBox: document.querySelector('.feeds-list'),
@@ -53,22 +24,48 @@ const elements = {
   submitBtn: document.querySelector('.submit-button'),
 };
 
-const app = () => { // controller
+const validate = (value, model) => {
+  setLocale({
+    mixed: {
+      required: i18next.t('errors.required'),
+      notOneOf: i18next.t('errors.existedRss'),
+    },
+    string: {
+      url: i18next.t('errors.invalidUrl'),
+    },
+  });
+
+  const existedFeeds = model.getFeedsArray();
+
+  const schema = yup
+    .string().required().url().notOneOf(existedFeeds);
+
+  try {
+    schema.validateSync(value);
+    return null;
+  } catch (err) {
+    return err.message;
+  }
+};
+
+const sendRequest = (link) => axios.get(addProxy(link))
+  .then(response => response.data.contents);
+
+const app = () => {
   const model = {
     feeds: [],
+    posts: [],
     error: null,
-    form: {
-      status: 'filling',
+    loadingProcess: {
+      status: 'idle', // loading, failed
+      error: null,
     },
-    isFeedExist(url) {
-      return new Promise((resolve = (v) => v, reject = (error) => error) => {
-        this.feeds.forEach((feed) => {
-          if (feed.link === url) {
-            reject(new Error(i18next.t('errors.existedRss')));
-          }
-        });
-        resolve(url);
-      });
+    form: {
+      status: 'filling', // read-only, failed
+      error: null,
+    },
+    getFeedsArray() {
+      return this.feeds.map((feed) => feed.id);
     },
   };
 
@@ -76,39 +73,40 @@ const app = () => { // controller
     e.preventDefault();
 
     const formData = new FormData(e.target);
-    const link = formData.get('name');
+    const value = formData.get('name');
     const watched = initView(model, elements);
 
-    validate(link, watched)
-      .then((value) => {
-        watched.form = {
-          error: null,
-        };
-        return value;
+    const error = validate(value, watched);
+
+    if (error) {
+      watched.form.error = error;
+      watched.form.status = 'failed';
+      return;
+    }
+
+    watched.form.status = 'read-only';
+    watched.loadingProcess.status = 'loading';
+
+    sendRequest(value)
+      .then((data) => {
+        const feedData = parse(data);
+        const { title, description, posts } = feedData;
+        watched.feeds.push({ id: value, title, description });
+        const postsWithFeedId = posts.map((post) => ({ feedId: value, ...post }));
+        [...watched.posts] = [...postsWithFeedId];
+        watched.loadingProcess.error = null;
+        watched.form.error = null;
+        watched.form.status = 'filling';
+        watched.loadingProcess.status = 'idle';
       })
       .catch((err) => {
-        watched.form.status = 'failed';
-        watched.form = {
-          error: err.message,
-        };
-        return err.message;
-      })
-      .then((value) => {
-        if (watched.form.error) {
-          return;
+        if (err.message === 'parsingError') {
+          watched.loadingProcess.error = i18next.t('errors.noRss');
+        } else {
+          watched.loadingProcess.error = i18next.t('errors.network');
         }
-        watched.form.status = 'loading';
-        sendRequest(value)
-          .then((data) => {
-            watched.error = null;
-            const rssData = parseRSS(data);
-            watched.feeds.push({ link, data: rssData });
-            watched.form.status = 'filling';
-          })
-          .catch((err) => {
-            watched.form.status = 'failed';
-            watched.error = err.message;
-          });
+        watched.loadingProcess.status = 'failed';
+        watched.form.status = 'failed';
       });
   });
 };
@@ -121,7 +119,7 @@ i18next.init({
   document.getElementById('header').textContent = i18next.t('header');
   document.getElementById('description').textContent = i18next.t('description');
   document.getElementById('input-placeholder').setAttribute('placeholder', i18next.t('input-placeholder'));
-  document.getElementById('add-button').textContent = i18next.t('add-button');
+  document.getElementById('add-button').textContent = i18next.t('buttons.add');
   document.getElementById('example').textContent = i18next.t('example');
   document.getElementById('feeds-title').textContent = i18next.t('feeds-title');
   document.getElementById('feeds-description').textContent = i18next.t('feeds-description');

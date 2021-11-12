@@ -4,4 +4,4 @@
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/95746f7a9f498a424e65/maintainability)](https://codeclimate.com/github/chubiitsa/frontend-project-lvl3/maintainability)
 
-[Мой проект на Vercel](https://frontend-project-kyprmeru8-chubiitsa.vercel.app/)
+[Мой проект на Vercel](https://frontend-project-mu.vercel.app/)
