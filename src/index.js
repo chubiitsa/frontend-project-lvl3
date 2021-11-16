@@ -51,11 +51,23 @@ const validate = (value, model) => {
 const sendRequest = (link) => axios.get(addProxy(link))
   .then(response => response.data.contents);
 
+const updatePosts = (model) => {
+  const feeds = model.getFeedsArray();
+  const rssData = feeds.map((feed) => sendRequest(feed)
+    .then(parse)
+    .then(({ posts }) => posts.map((post) => ({ feedId: feed, ...post })))
+    .then(posts => {
+      const newPosts = _.differenceBy(posts, model.posts, 'link');
+      model.posts = [...newPosts, ...model.posts];
+    }));
+  return Promise.all(rssData);
+};
+
 const app = () => {
+  const updateInterval = 5000;
   const model = {
     feeds: [],
     posts: [],
-    error: null,
     loadingProcess: {
       status: 'idle', // loading, failed
       error: null,
@@ -89,11 +101,10 @@ const app = () => {
 
     sendRequest(value)
       .then((data) => {
-        const feedData = parse(data);
-        const { title, description, posts } = feedData;
-        watched.feeds.push({ id: value, title, description });
+        const { title, description, posts } = parse(data);
+        watched.feeds = [{ id: value, title, description }, ...watched.feeds];
         const postsWithFeedId = posts.map((post) => ({ feedId: value, ...post }));
-        [...watched.posts] = [...postsWithFeedId];
+        watched.posts = [...postsWithFeedId, ...watched.posts];
         watched.loadingProcess.error = null;
         watched.form.error = null;
         watched.form.status = 'filling';
@@ -107,6 +118,14 @@ const app = () => {
         }
         watched.loadingProcess.status = 'failed';
         watched.form.status = 'failed';
+      })
+      .then(() => {
+        setTimeout(function upd() {
+          updatePosts(watched)
+            .finally(() => {
+              setTimeout(upd, updateInterval);
+            });
+        }, updateInterval);
       });
   });
 };

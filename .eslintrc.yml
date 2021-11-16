@@ -15,4 +15,3 @@ rules:
   arrow-parens: 0
   no-param-reassign: 0
   no-undef: 0
-
