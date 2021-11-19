@@ -51,7 +51,8 @@ const validate = (value, model) => {
 const sendRequest = (link) => axios.get(addProxy(link))
   .then(response => response.data.contents);
 
-const updatePosts = (model) => {
+
+const updatePosts = (model, interval) => {
   const feeds = model.getFeedsArray();
   const rssData = feeds.map((feed) => sendRequest(feed)
     .then(parse)
@@ -60,7 +61,8 @@ const updatePosts = (model) => {
       const newPosts = _.differenceBy(posts, model.posts, 'link');
       model.posts = [...newPosts, ...model.posts];
     }));
-  return Promise.all(rssData);
+  return Promise.all(rssData)
+    .finally(() => setTimeout(() => updatePosts(model, interval), interval));
 };
 
 const app = () => {
@@ -80,14 +82,13 @@ const app = () => {
       return this.feeds.map((feed) => feed.id);
     },
   };
+  const watched = initView(model, elements);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
     const value = formData.get('name');
-    const watched = initView(model, elements);
-
     const error = validate(value, watched);
 
     if (error) {
@@ -119,15 +120,8 @@ const app = () => {
         watched.loadingProcess.status = 'failed';
         watched.form.status = 'failed';
       })
-      .then(() => {
-        setTimeout(function upd() {
-          updatePosts(watched)
-            .finally(() => {
-              setTimeout(upd, updateInterval);
-            });
-        }, updateInterval);
-      });
   });
+  updatePosts(watched, updateInterval);
 };
 
 i18next.init({
