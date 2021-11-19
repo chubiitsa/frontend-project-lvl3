@@ -53,13 +53,16 @@ const renderItem = (item, elements) => {
   elements.postsBox.append(postElement);
 };
 
-const renderPosts = (posts, elements) => posts.forEach((item) => renderItem(item, elements));
+const renderPosts = (posts, elements) => {
+  elements.postsBox.textContent = '';
+  posts.forEach((item) => renderItem(item, elements));
+};
 
 const renderFeeds = (feeds, elements) => {
   elements.feedsBox.textContent = '';
   const feedNodes = feeds.map((feed) => {
     const feedItem = document.createElement('li');
-    const title = document.createElement('h3');
+    const title = document.createElement('h5');
     title.textContent = feed.title;
     const description = document.createElement('p');
     description.textContent = feed.description;
@@ -102,6 +105,7 @@ const view = (state, elements) => {
     'form.status': () => renderForm(state, elements),
     'form.error': () => renderError(state.form.error, elements),
     'loadingProcess.status': () => renderProgressMessage(state, elements),
+    'loadingProcess.error': () => renderError(state.loadingProcess.error, elements),
     feeds: () => renderFeeds(state.feeds, elements),
     posts: () => renderPosts(state.posts, elements),
   };
