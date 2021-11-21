@@ -21,9 +21,10 @@ const parse = (rssData) => {
   rssPosts.forEach((node) => {
     const title = node.querySelector('title').textContent;
     const link = node.querySelector('link').textContent;
+    const postDescription = node.querySelector('description').textContent;
     const postId = _.uniqueId('');
     posts.push({
-      title, link, postId,
+      postId, title, link, description: postDescription,
     });
   });
   return { title: feedTitle, description, posts };
