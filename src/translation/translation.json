@@ -9,9 +9,11 @@
       "feeds-description": "List of feeds",
       "posts-title": "Posts",
       "posts-description": "List of related posts",
+      "modal-full-post-link": "Read full story",
       "buttons": {
         "add": "Add",
-        "preview": "Quick view"
+        "preview": "Quick view",
+        "modal-close-btn": "Close"
       },
       "errors": {
         "noRss": "There is no RSS-feed at this URL",
@@ -36,9 +38,11 @@
       "feeds-description": "Здесь появится список ваших потоков",
       "posts-title": "Посты",
       "posts-description": "Здесь появятся свежие новости с добавленных потоков",
+      "modal-full-post-link": "Читать полностью",
       "buttons": {
         "add": "Добавить",
-        "preview": "Просмотр"
+        "preview": "Просмотр",
+        "modal-close-btn": "Закрыть"
       },
       "errors": {
         "noRss": "Ресурс не содержит валидный RSS",

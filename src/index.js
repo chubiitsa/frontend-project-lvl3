@@ -22,6 +22,7 @@ const elements = {
   input: document.querySelector('.rss-link'),
   form: document.querySelector('.rss-form'),
   submitBtn: document.querySelector('.submit-button'),
+  modal: document.querySelector('.modal'),
 };
 
 const validate = (value, model) => {
@@ -77,6 +78,12 @@ const app = () => {
       status: 'filling', // read-only, failed
       error: null,
     },
+    modal: {
+      openedPost: null,
+    },
+    ui: {
+      seenPosts: new Set(),
+    },
     getFeedsArray() {
       return this.feeds.map((feed) => feed.id);
     },
@@ -120,6 +127,17 @@ const app = () => {
         watched.form.status = 'failed';
       });
   });
+
+  elements.postsBox.addEventListener('click', (e) => {
+    const eventTarget = e.target;
+    if (!eventTarget.dataset.id) return;
+    const postId = eventTarget.dataset.id;
+    if (eventTarget.tagName === 'BUTTON') {
+      watched.modal.openedPost = postId;
+    }
+    watched.ui.seenPosts.add(postId);
+  });
+
   updatePosts(watched, updateInterval);
 };
 
@@ -137,4 +155,6 @@ i18next.init({
   document.getElementById('feeds-description').textContent = i18next.t('feeds-description');
   document.getElementById('posts-title').textContent = i18next.t('posts-title');
   document.getElementById('posts-description').textContent = i18next.t('posts-description');
+  document.querySelector('.modal-full-post-link').textContent = i18next.t('modal-full-post-link');
+  document.querySelector('.modal-close-btn').textContent = i18next.t('buttons.modal-close-btn');
 }).then(app());
