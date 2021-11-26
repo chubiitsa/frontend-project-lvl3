@@ -1,5 +1,4 @@
 import onChange from 'on-change';
-import i18next from 'i18next';
 import { Modal } from 'bootstrap';
 
 const renderError = (errorMessage, elements) => {
@@ -15,20 +14,20 @@ const renderError = (errorMessage, elements) => {
   elements.input.select();
 };
 
-const renderProgressMessage = (state, elements) => {
+const renderProgressMessage = (state, elements, translator) => {
   const previousMessage = elements.form.nextSibling;
   if (previousMessage) {
     previousMessage.remove();
   }
-  const messageContainer = document.createElement('div');
+  const messageContainer = document.createElement('p');
   switch (state.loadingProcess.status) {
     case 'loading':
-      messageContainer.textContent = i18next.t('messages.progress');
+      messageContainer.textContent = translator('messages.progress');
       messageContainer.classList.add('text-info');
       elements.form.after(messageContainer);
       break;
     case 'idle':
-      messageContainer.textContent = i18next.t('messages.success');
+      messageContainer.textContent = translator('messages.success');
       messageContainer.classList.add('text-success');
       elements.form.after(messageContainer);
       break;
@@ -41,7 +40,7 @@ const renderProgressMessage = (state, elements) => {
   }
 };
 
-const renderItem = (item, elements, state) => {
+const renderItem = (item, elements, state, translator) => {
   const titleElement = document.createElement('a');
   titleElement.setAttribute('href', item.link);
   titleElement.setAttribute('target', '_blank');
@@ -51,7 +50,7 @@ const renderItem = (item, elements, state) => {
   titleElement.classList.add(fontWeight);
   const previewElement = document.createElement('button');
   previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewElement.textContent = i18next.t('buttons.preview');
+  previewElement.textContent = translator('buttons.preview');
   previewElement.setAttribute('data-id', item.postId);
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
@@ -59,9 +58,9 @@ const renderItem = (item, elements, state) => {
   elements.postsBox.append(postElement);
 };
 
-const renderPosts = (state, elements) => {
+const renderPosts = (state, elements, translator) => {
   elements.postsBox.textContent = '';
-  state.posts.forEach((item) => renderItem(item, elements, state));
+  state.posts.forEach((item) => renderItem(item, elements, state, translator));
 };
 
 const renderFeeds = (feeds, elements) => {
@@ -119,15 +118,15 @@ const renderModal = (state, elements) => {
   modalElement.show();
 };
 
-const view = (state, elements) => {
+const view = (state, elements, translator) => {
   const mapping = {
-    'form.status': () => renderForm(state, elements),
+    'form.status': () => renderForm(state, elements, translator),
     'form.error': () => renderError(state.form.error, elements),
-    'loadingProcess.status': () => renderProgressMessage(state, elements),
+    'loadingProcess.status': () => renderProgressMessage(state, elements, translator),
     'modal.openedPost': () => renderModal(state, elements),
-    'ui.seenPosts': () => renderPosts(state, elements),
+    'ui.seenPosts': () => renderPosts(state, elements, translator),
     feeds: () => renderFeeds(state.feeds, elements),
-    posts: () => renderPosts(state, elements),
+    posts: () => renderPosts(state, elements, translator),
   };
 
   return onChange(state, (path) => {

@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import axios from 'axios';
 import * as yup from 'yup';
-import { setLocale } from 'yup';
+import {setLocale} from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
 import resources from './translation/translation.json';
@@ -25,14 +25,14 @@ const elements = {
   modal: document.querySelector('.modal'),
 };
 
-const validate = (value, model) => {
+const validate = (value, model, translator) => {
   setLocale({
     mixed: {
-      required: i18next.t('errors.required'),
-      notOneOf: i18next.t('errors.existedRss'),
+      required: translator('errors.required'),
+      notOneOf: translator('errors.existedRss'),
     },
     string: {
-      url: i18next.t('errors.invalidUrl'),
+      url: translator('errors.invalidUrl'),
     },
   });
 
@@ -65,7 +65,7 @@ const updatePosts = (model, interval) => {
     .finally(() => setTimeout(() => updatePosts(model, interval), interval));
 };
 
-const app = () => {
+const app = (translator) => {
   const updateInterval = 5000;
   const model = {
     feeds: [],
@@ -88,14 +88,14 @@ const app = () => {
       return this.feeds.map((feed) => feed.id);
     },
   };
-  const watched = initView(model, elements);
+  const watched = initView(model, elements, translator);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
     const value = formData.get('name');
-    const error = validate(value, watched);
+    const error = validate(value, watched, translator);
 
     if (error) {
       watched.form.error = error;
@@ -119,9 +119,9 @@ const app = () => {
       })
       .catch((err) => {
         if (err.message === 'parsingError') {
-          watched.loadingProcess.error = i18next.t('errors.noRss');
+          watched.loadingProcess.error = translator('errors.noRss');
         } else {
-          watched.loadingProcess.error = i18next.t('errors.network');
+          watched.loadingProcess.error = translator('errors.network');
         }
         watched.loadingProcess.status = 'failed';
         watched.form.status = 'failed';
@@ -141,20 +141,25 @@ const app = () => {
   updatePosts(watched, updateInterval);
 };
 
-i18next.init({
-  lng: 'ru',
-  debug: true,
-  resources,
-}, () => {
-  document.getElementById('header').textContent = i18next.t('header');
-  document.getElementById('description').textContent = i18next.t('description');
-  document.getElementById('input-placeholder').setAttribute('placeholder', i18next.t('input-placeholder'));
-  document.getElementById('add-button').textContent = i18next.t('buttons.add');
-  document.getElementById('example').textContent = i18next.t('example');
-  document.getElementById('feeds-title').textContent = i18next.t('feeds-title');
-  document.getElementById('feeds-description').textContent = i18next.t('feeds-description');
-  document.getElementById('posts-title').textContent = i18next.t('posts-title');
-  document.getElementById('posts-description').textContent = i18next.t('posts-description');
-  document.querySelector('.modal-full-post-link').textContent = i18next.t('modal-full-post-link');
-  document.querySelector('.modal-close-btn').textContent = i18next.t('buttons.modal-close-btn');
-}).then(app());
+const init = () => {
+  const newInstance = i18next.createInstance()
+  return newInstance.init({
+    lng: 'ru',
+    debug: false,
+    resources,
+  },(err, t) => {
+    document.getElementById('header').textContent = t('header');
+    document.getElementById('description').textContent = t('description');
+    document.getElementById('input-placeholder').setAttribute('placeholder', t('input-placeholder'));
+    document.getElementById('add-button').textContent = t('buttons.add');
+    document.getElementById('example').textContent = t('example');
+    document.getElementById('feeds-title').textContent = t('feeds-title');
+    document.getElementById('feeds-description').textContent = t('feeds-description');
+    document.getElementById('posts-title').textContent = t('posts-title');
+    document.getElementById('posts-description').textContent = t('posts-description');
+    document.querySelector('.modal-full-post-link').textContent = t('modal-full-post-link');
+    document.querySelector('.modal-close-btn').textContent = t('buttons.modal-close-btn');
+  }).then((t) => app(t));
+}
+
+export default init;
