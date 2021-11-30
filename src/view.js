@@ -1,12 +1,11 @@
 import onChange from 'on-change';
-import { Modal } from 'bootstrap';
 
 const renderError = (errorMessage, elements) => {
   const previousMessage = elements.form.nextSibling;
   if (previousMessage) {
     previousMessage.remove();
   }
-  const errorContainer = document.createElement('div');
+  const errorContainer = document.createElement('p');
   errorContainer.classList.add('text-danger');
   errorContainer.textContent = errorMessage;
   elements.form.after(errorContainer);
@@ -48,13 +47,16 @@ const renderItem = (item, elements, state, translator) => {
   titleElement.setAttribute('data-id', item.postId);
   const fontWeight = state.ui.seenPosts.has(item.postId) ? 'fw-normal' : 'fw-bold';
   titleElement.classList.add(fontWeight);
-  const previewElement = document.createElement('button');
-  previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewElement.textContent = translator('buttons.preview');
-  previewElement.setAttribute('data-id', item.postId);
+  const previewButton = document.createElement('button');
+  previewButton.classList.add('btn', 'btn-primary', 'btn-sm');
+  previewButton.setAttribute('aria-label', 'preview-button');
+  previewButton.textContent = translator('buttons.preview');
+  previewButton.dataset.id = item.postId;
+  previewButton.dataset.bsToggle = 'modal';
+  previewButton.dataset.bsTarget = '#modal';
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
-  postElement.append(titleElement, previewElement);
+  postElement.append(titleElement, previewButton);
   elements.postsBox.append(postElement);
 };
 
@@ -68,8 +70,10 @@ const renderFeeds = (feeds, elements) => {
   const feedNodes = feeds.map((feed) => {
     const feedItem = document.createElement('li');
     const title = document.createElement('h5');
+    title.classList.add('feed-title');
     title.textContent = feed.title;
     const description = document.createElement('p');
+    description.classList.add('feed-description');
     description.textContent = feed.description;
     feedItem.classList.add('list-group-item', 'text-body');
     feedItem.append(title, description);
@@ -114,11 +118,25 @@ const renderModal = (state, elements) => {
   modalTitle.textContent = title;
   modalDescription.textContent = description;
   linkButton.setAttribute('href', link);
-  const modalElement = new Modal(elements.modal);
-  modalElement.show();
 };
 
-const view = (state, elements, translator) => {
+const renderPage = (state, elements, translator) => {
+  elements.header.textContent = translator('header');
+  elements.description.textContent = translator('description');
+  elements.inputPlaceholder.setAttribute('placeholder', translator('input-placeholder'));
+  elements.addButton.textContent = translator('buttons.add');
+  elements.exampleElement.textContent = translator('example');
+  elements.feedsTitle.textContent = translator('feeds-title');
+  elements.feedsDescription.textContent = translator('feeds-description');
+  elements.postsTitle.textContent = translator('posts-title');
+  elements.postsDescription.textContent = translator('posts-description');
+  elements.modalLink.textContent = translator('modal-full-post-link');
+  elements.modalClose.textContent = translator('buttons.modal-close-btn');
+};
+
+const initView = (state, elements, translator) => {
+  renderPage(state, elements, translator);
+
   const mapping = {
     'form.status': () => renderForm(state, elements, translator),
     'form.error': () => renderError(state.form.error, elements),
@@ -136,4 +154,4 @@ const view = (state, elements, translator) => {
   });
 };
 
-export default view;
+export default initView;

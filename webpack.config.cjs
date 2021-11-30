@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: './src/init.js',
+  entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'init_bundle.js',
@@ -14,9 +14,26 @@ module.exports = {
   module: {
     rules: [
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+      {
+        test: /\.m?js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: [
+              ['@babel/preset-env', { targets: "defaults" }]
+            ]
+          }
+        }
+      },
     ]
   },
   plugins: [
-    new HtmlWebpackPlugin,
+    new HtmlWebpackPlugin({
+      hash: true,
+      template: './src/index.html',
+      filename: 'index.html'
+    })
   ],
 };
+
