@@ -6,7 +6,7 @@ import path from 'path';
 import { readFileSync, createReadStream } from 'fs';
 import run from '../src/init.js';
 
-const pathToIndex = path.join('src', 'index.html');
+const pathToIndex = path.join('.', 'index.html');
 const data = readFileSync(pathToIndex, 'utf-8');
 const nockBasePath = 'https://hexlet-allorigins.herokuapp.com';
 
