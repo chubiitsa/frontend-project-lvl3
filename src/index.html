@@ -8,20 +8,19 @@
 <main class="flex-grow-1">
     <div class="container-fluid bg-dark p-5">
         <div class="col-md-10 col-lg-8 mx-auto text-white">
-            <h1 class="display-3" id="header">RSS агрегатор</h1>
-            <p class="lead" id="description">Всё интересное в одном месте</p>
+            <h1 class="display-3" id="header"></h1>
+            <p class="lead" id="description"></p>
             <form class="rss-form">
                 <div class="form-row row">
                     <div class="form-group col">
-                        <input type="text" autofocus required class="form-control form-control-lg w-100 rss-link" name="name" id="input-placeholder" placeholder="ссылка RSS">
+                        <input type="text" autofocus required class="form-control form-control-lg w-100 rss-link" name="name" id="input-placeholder" placeholder="">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button" id="add-button">Add</button>
+                        <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button" id="add-button"></button>
                     </div>
                 </div>
             </form>
-            <p id='output'></p>
-            <small class="form-text text-muted" id="example">Пример: https://ru.hexlet.io/lessons.rss</small>
+            <small class="form-text text-muted" id="example"></small>
         </div>
     </div>
     <div class="container-fluid p-5">
@@ -30,29 +29,30 @@
                 <div class="col-6 col-md-4 bg-info p-3">
                     <h1 id="feeds-title"></h1>
                     <p class="text-light" id="feeds-description"></p>
-                    <ul class="list-group feeds-list"></ul>
+                    <ul class="list-group feeds-list" aria-label="feedsBox"></ul>
                 </div>
                 <div class="bg-light text-dark col-md-10 col-lg-8 mx-auto p-3">
                     <h1 id="posts-title"></h1>
                     <p class="text-dark" id="posts-description"></p>
-                    <ul class="list-group posts-list"></ul>
+                    <ul class="list-group posts-list" aria-label="postsBox"></ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-break">
                     <p class="modal-description"></p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-primary modal-full-post-link" target="_blank"></a>
+                    <a class="btn btn-primary modal-full-post-link" href="#" role="button" target="_blank" rel="noopener noreferrer">
+                    </a>
                     <button type="button" class="btn btn-secondary modal-close-btn" data-bs-dismiss="modal"></button>
                 </div>
             </div>

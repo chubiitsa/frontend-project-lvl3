@@ -1,13 +1,11 @@
 import onChange from 'on-change';
-import i18next from 'i18next';
-import { Modal } from 'bootstrap';
 
 const renderError = (errorMessage, elements) => {
   const previousMessage = elements.form.nextSibling;
   if (previousMessage) {
     previousMessage.remove();
   }
-  const errorContainer = document.createElement('div');
+  const errorContainer = document.createElement('p');
   errorContainer.classList.add('text-danger');
   errorContainer.textContent = errorMessage;
   elements.form.after(errorContainer);
@@ -15,20 +13,20 @@ const renderError = (errorMessage, elements) => {
   elements.input.select();
 };
 
-const renderProgressMessage = (state, elements) => {
+const renderProgressMessage = (state, elements, translator) => {
   const previousMessage = elements.form.nextSibling;
   if (previousMessage) {
     previousMessage.remove();
   }
-  const messageContainer = document.createElement('div');
+  const messageContainer = document.createElement('p');
   switch (state.loadingProcess.status) {
     case 'loading':
-      messageContainer.textContent = i18next.t('messages.progress');
+      messageContainer.textContent = translator('messages.progress');
       messageContainer.classList.add('text-info');
       elements.form.after(messageContainer);
       break;
     case 'idle':
-      messageContainer.textContent = i18next.t('messages.success');
+      messageContainer.textContent = translator('messages.success');
       messageContainer.classList.add('text-success');
       elements.form.after(messageContainer);
       break;
@@ -41,7 +39,7 @@ const renderProgressMessage = (state, elements) => {
   }
 };
 
-const renderItem = (item, elements, state) => {
+const renderItem = (item, elements, state, translator) => {
   const titleElement = document.createElement('a');
   titleElement.setAttribute('href', item.link);
   titleElement.setAttribute('target', '_blank');
@@ -49,19 +47,22 @@ const renderItem = (item, elements, state) => {
   titleElement.setAttribute('data-id', item.postId);
   const fontWeight = state.ui.seenPosts.has(item.postId) ? 'fw-normal' : 'fw-bold';
   titleElement.classList.add(fontWeight);
-  const previewElement = document.createElement('button');
-  previewElement.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewElement.textContent = i18next.t('buttons.preview');
-  previewElement.setAttribute('data-id', item.postId);
+  const previewButton = document.createElement('button');
+  previewButton.classList.add('btn', 'btn-primary', 'btn-sm');
+  previewButton.setAttribute('aria-label', 'preview-button');
+  previewButton.textContent = translator('buttons.preview');
+  previewButton.dataset.id = item.postId;
+  previewButton.dataset.bsToggle = 'modal';
+  previewButton.dataset.bsTarget = '#modal';
   const postElement = document.createElement('li');
   postElement.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start');
-  postElement.append(titleElement, previewElement);
+  postElement.append(titleElement, previewButton);
   elements.postsBox.append(postElement);
 };
 
-const renderPosts = (state, elements) => {
+const renderPosts = (state, elements, translator) => {
   elements.postsBox.textContent = '';
-  state.posts.forEach((item) => renderItem(item, elements, state));
+  state.posts.forEach((item) => renderItem(item, elements, state, translator));
 };
 
 const renderFeeds = (feeds, elements) => {
@@ -69,8 +70,10 @@ const renderFeeds = (feeds, elements) => {
   const feedNodes = feeds.map((feed) => {
     const feedItem = document.createElement('li');
     const title = document.createElement('h5');
+    title.classList.add('feed-title');
     title.textContent = feed.title;
     const description = document.createElement('p');
+    description.classList.add('feed-description');
     description.textContent = feed.description;
     feedItem.classList.add('list-group-item', 'text-body');
     feedItem.append(title, description);
@@ -115,19 +118,33 @@ const renderModal = (state, elements) => {
   modalTitle.textContent = title;
   modalDescription.textContent = description;
   linkButton.setAttribute('href', link);
-  const modalElement = new Modal(elements.modal);
-  modalElement.show();
 };
 
-const view = (state, elements) => {
+const renderPage = (state, elements, translator) => {
+  elements.header.textContent = translator('header');
+  elements.description.textContent = translator('description');
+  elements.inputPlaceholder.setAttribute('placeholder', translator('input-placeholder'));
+  elements.addButton.textContent = translator('buttons.add');
+  elements.exampleElement.textContent = translator('example');
+  elements.feedsTitle.textContent = translator('feeds-title');
+  elements.feedsDescription.textContent = translator('feeds-description');
+  elements.postsTitle.textContent = translator('posts-title');
+  elements.postsDescription.textContent = translator('posts-description');
+  elements.modalLink.textContent = translator('modal-full-post-link');
+  elements.modalClose.textContent = translator('buttons.modal-close-btn');
+};
+
+const initView = (state, elements, translator) => {
+  renderPage(state, elements, translator);
+
   const mapping = {
-    'form.status': () => renderForm(state, elements),
+    'form.status': () => renderForm(state, elements, translator),
     'form.error': () => renderError(state.form.error, elements),
-    'loadingProcess.status': () => renderProgressMessage(state, elements),
+    'loadingProcess.status': () => renderProgressMessage(state, elements, translator),
     'modal.openedPost': () => renderModal(state, elements),
-    'ui.seenPosts': () => renderPosts(state, elements),
+    'ui.seenPosts': () => renderPosts(state, elements, translator),
     feeds: () => renderFeeds(state.feeds, elements),
-    posts: () => renderPosts(state, elements),
+    posts: () => renderPosts(state, elements, translator),
   };
 
   return onChange(state, (path) => {
@@ -137,4 +154,4 @@ const view = (state, elements) => {
   });
 };
 
-export default view;
+export default initView;
