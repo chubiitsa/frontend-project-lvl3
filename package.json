@@ -2,7 +2,7 @@
   "name": "@hexlet/code",
   "version": "1.0.0",
   "description": "RSS агрегатор",
-  "main": "dist/index.html",
+  "main": "src/init.js",
   "jest": {
     "testEnvironment": "jest-environment-jsdom",
     "moduleNameMapper": {

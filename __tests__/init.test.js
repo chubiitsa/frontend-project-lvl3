@@ -6,7 +6,7 @@ import path from 'path';
 import { readFileSync, createReadStream } from 'fs';
 import run from '../src/init.js';
 
-const pathToIndex = path.join('src', 'index.html');
+const pathToIndex = path.join('.', 'index.html');
 const data = readFileSync(pathToIndex, 'utf-8');
 const nockBasePath = 'https://hexlet-allorigins.herokuapp.com';
 
@@ -29,8 +29,6 @@ beforeEach(async () => {
   await run();
   elements.input = screen.getByRole('textbox');
   elements.submitButton = screen.getByRole('button');
-  elements.feedsBox = screen.getByRole('list', { name: 'feedsBox' });
-  elements.postsList = screen.getByRole('list', { name: 'postsBox' });
 });
 
 test('add feed', async () => {
@@ -40,8 +38,8 @@ test('add feed', async () => {
 
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
-  await waitFor(() => screen.findByText('Идет загрузка ...'));
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
+  expect(await screen.findByText(/Идет загрузка .../i)).toBeInTheDocument();
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
 
   scope.done();
 });
@@ -49,7 +47,7 @@ test('add feed', async () => {
 test('validation: url', async () => {
   userEvent.paste(elements.input, brokenLink);
   userEvent.click(elements.submitButton);
-  await waitFor(() => screen.findByText('Ссылка должна быть валидным URL'));
+  expect(await screen.findByText(/Ссылка должна быть валидным URL/i)).toBeInTheDocument();
 });
 
 test('validation: unique feed', async () => {
@@ -60,12 +58,12 @@ test('validation: unique feed', async () => {
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('Идет загрузка ...'));
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
+  expect(await screen.findByText(/Идет загрузка .../i)).toBeInTheDocument();
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
 
-  userEvent.paste(elements.input, 'https://ru.hexlet.io/lessons.rss');
+  userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
-  await waitFor(() => screen.findByText('RSS уже существует'));
+  expect(await screen.findByText(/RSS уже существует/i)).toBeInTheDocument();
 
   scope.done();
 });
@@ -78,7 +76,7 @@ test('validation: no RSS', async () => {
   userEvent.paste(elements.input, linkWithoutRss);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('Ресурс не содержит валидный RSS'));
+  expect(await screen.findByText(/Ресурс не содержит валидный RSS/i)).toBeInTheDocument();
 
   scope.done();
 });
@@ -91,11 +89,12 @@ test('render feed & posts', async () => {
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
-  expect(elements.feedsBox.children).toHaveLength(1);
-  screen.getByText('Новые уроки на Хекслете');
-  screen.getByText('Практические уроки по программированию');
-  expect(elements.postsList.children).toHaveLength(2);
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
+  expect(screen.getByText(/Новые уроки на Хекслете/i)).toBeInTheDocument();
+  expect(screen.getByText(/Практические уроки по программированию/i)).toBeInTheDocument();
+  expect(await screen.findByRole('link', { name: /Фильтрация \/ Java: Корпоративные приложения на Spring Boot/i })).toBeInTheDocument();
+  expect(await screen.findByRole('link', { name: /Open API \/ Java: Корпоративные приложения на Spring Boot/i })).toBeInTheDocument();
+
   scope.done();
 });
 
@@ -107,11 +106,12 @@ test('modal opening', async () => {
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
-  const buttons = screen.getAllByRole('button', { name: 'preview-button' });
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
+  const buttons = screen.getAllByRole('button', { name: /Просмотр/i });
   userEvent.click(buttons[0]);
-  await waitFor(() => screen.findByRole('document'));
-  screen.getByText('Цель: Научиться использовать фильтрацию данных по определённым критериям');
+  expect(await waitFor(() => screen.findByRole('document'))).toBeInTheDocument();
+  expect(screen.getByText(/Цель: Научиться использовать фильтрацию данных по определённым критериям/i)).toBeInTheDocument();
+
   scope.done();
 });
 
@@ -121,11 +121,11 @@ test('disabled while loading', async () => {
     .replyWithFile(200, pathToResponseFile);
 
   userEvent.paste(elements.input, link);
-  expect(elements.submitButton).not.toBeDisabled();
+  expect(elements.submitButton).toBeEnabled();
   userEvent.click(elements.submitButton);
   expect(elements.submitButton).toBeDisabled();
-  await waitFor(() => screen.findByText('Идет загрузка ...'));
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
+  expect(await screen.findByText(/Идет загрузка .../i)).toBeInTheDocument();
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
 
   scope.done();
 });
@@ -138,7 +138,8 @@ test('network error', async () => {
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('Ошибка сети'));
+  expect(await screen.findByText(/Ошибка сети/i)).toBeInTheDocument();
+
   scope.done();
 });
 
@@ -161,8 +162,13 @@ test('updating posts', async () => {
   userEvent.paste(elements.input, link);
   userEvent.click(elements.submitButton);
 
-  await waitFor(() => screen.findByText('RSS успешно загружен'));
-  expect(elements.postsList.children).toHaveLength(2);
-  await waitFor(() => expect(elements.postsList.children).toHaveLength(3), { timeout: 6000 });
+  expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
+  expect(await screen.findAllByRole('link')).toHaveLength(2);
+
+  await waitFor(async () => {
+    const posts = await screen.findAllByRole('link');
+    expect(posts).toHaveLength(3);
+  }, { timeout: 6000 });
+
   scope.done();
 });

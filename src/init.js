@@ -44,14 +44,14 @@ const validate = (value, model, translator) => {
 };
 
 const sendRequest = (link) => axios.get(addProxy(link).toString())
-  .then(response => response.data.contents);
+  .then((response) => response.data.contents);
 
 const updatePosts = (model, interval) => {
   const feeds = model.feeds.map((feed) => feed.id);
   const rssData = feeds.map((feed) => sendRequest(feed)
     .then(parse)
     .then(({ posts }) => posts.map((post) => ({ feedId: feed, ...post })))
-    .then(posts => {
+    .then((posts) => {
       const newPosts = _.differenceBy(posts, model.posts, 'link');
       model.posts = [...newPosts, ...model.posts];
     }));

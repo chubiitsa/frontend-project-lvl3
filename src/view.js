@@ -31,6 +31,7 @@ const renderProgressMessage = (state, elements, translator) => {
       elements.form.after(messageContainer);
       break;
     case 'failed':
+      elements.input.removeAttribute('readonly');
       renderError(state.loadingProcess.error, elements);
       break;
 
@@ -49,7 +50,6 @@ const renderItem = (item, elements, state, translator) => {
   titleElement.classList.add(fontWeight);
   const previewButton = document.createElement('button');
   previewButton.classList.add('btn', 'btn-primary', 'btn-sm');
-  previewButton.setAttribute('aria-label', 'preview-button');
   previewButton.textContent = translator('buttons.preview');
   previewButton.dataset.id = item.postId;
   previewButton.dataset.bsToggle = 'modal';
@@ -86,7 +86,7 @@ const renderForm = (state, elements) => {
   switch (state.form.status) {
     case 'filling':
       elements.submitBtn.removeAttribute('disabled');
-      elements.input.removeAttribute('disabled');
+      elements.input.removeAttribute('readonly');
       elements.input.classList.remove('is-invalid');
       elements.input.value = '';
       break;
@@ -94,7 +94,7 @@ const renderForm = (state, elements) => {
     case 'read-only':
       elements.submitBtn.setAttribute('disabled', true);
       elements.input.classList.remove('is-invalid');
-      elements.input.setAttribute('disabled', true);
+      elements.input.setAttribute('readonly', true);
       break;
 
     case 'failed':
