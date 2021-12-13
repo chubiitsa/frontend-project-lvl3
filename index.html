@@ -13,7 +13,7 @@
             <form class="rss-form">
                 <div class="form-row row">
                     <div class="form-group col">
-                        <input type="text" autofocus required class="form-control form-control-lg w-100 rss-link" name="name" aria-label="url" id="input-placeholder" placeholder="">
+                        <input type="text" autofocus required class="form-control form-control-lg w-100 rss-link" name="url" aria-label="url" id="input-placeholder" placeholder="">
                     </div>
                     <div class="col-auto">
                         <button type="submit" class="btn btn-lg btn-primary px-sm-5 submit-button" id="add-button" aria-label="add"></button>
@@ -21,17 +21,18 @@
                 </div>
             </form>
             <small class="form-text text-muted" id="example"></small>
+            <p class="message m-0 position-absolute small text-danger">
         </div>
     </div>
     <div class="container-fluid p-5">
         <div class="col-md-10 col-lg-8 mx-auto text-white">
             <div class="row">
-                <div class="col-6 col-md-4 bg-info p-3">
+                <div class="col-md-10 col-lg-4 mx-auto bg-info p-3">
                     <h1 id="feeds-title"></h1>
                     <p class="text-light" id="feeds-description"></p>
                     <ul class="list-group feeds-list" aria-label="feedsBox"></ul>
                 </div>
-                <div class="bg-light text-dark col-md-10 col-lg-8 mx-auto p-3">
+                <div class="col-md-10 col-lg-8 mx-auto bg-light text-dark  p-3">
                     <h1 id="posts-title"></h1>
                     <p class="text-dark" id="posts-description"></p>
                     <ul class="list-group posts-list" aria-label="postsBox"></ul>

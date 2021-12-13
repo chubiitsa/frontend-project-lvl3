@@ -3,8 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { screen, waitFor } from '@testing-library/dom';
 import nock from 'nock';
 import path from 'path';
+import axios from 'axios';
 import { readFileSync, createReadStream } from 'fs';
 import run from '../src/init.js';
+
+axios.defaults.adapter = require('axios/lib/adapters/http');
 
 const pathToIndex = path.join('.', 'index.html');
 const data = readFileSync(pathToIndex, 'utf-8');
@@ -126,6 +129,7 @@ test('disabled while loading', async () => {
   expect(elements.submitButton).toBeDisabled();
   expect(await screen.findByText(/Идет загрузка .../i)).toBeInTheDocument();
   expect(await screen.findByText(/RSS успешно загружен/i)).toBeInTheDocument();
+  await expect(elements.submitButton).toBeEnabled();
 
   scope.done();
 });

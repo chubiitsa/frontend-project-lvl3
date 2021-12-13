@@ -1,4 +1,3 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import axios from 'axios';
 import * as yup from 'yup';
@@ -6,17 +5,17 @@ import _ from 'lodash';
 import { setLocale } from 'yup';
 import i18next from 'i18next';
 import initView from './view.js';
-import resources from './translation/translation.json';
-import parse from './parse.js';
+import parse from './rss.js';
+import translation from './translation.js';
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+const updateInterval = 5000;
 
 const addProxy = (url) => {
   const proxy = 'https://hexlet-allorigins.herokuapp.com/';
   const urlWithProxy = new URL('get', proxy);
   urlWithProxy.searchParams.append('disableCache', true);
   urlWithProxy.searchParams.append('url', url);
-  return urlWithProxy;
+  return urlWithProxy.toString();
 };
 
 const validate = (value, model, translator) => {
@@ -30,7 +29,7 @@ const validate = (value, model, translator) => {
     },
   });
 
-  const existedFeeds = model.feeds.map((feed) => feed.id);
+  const existedFeeds = model.feeds.map((feed) => feed.url);
 
   const schema = yup
     .string().required().url().notOneOf(existedFeeds);
@@ -43,20 +42,30 @@ const validate = (value, model, translator) => {
   }
 };
 
-const sendRequest = (link) => axios.get(addProxy(link).toString())
+const sendRequest = (link) => axios.get(addProxy(link))
   .then((response) => response.data.contents);
 
 const updatePosts = (model, interval) => {
-  const feeds = model.feeds.map((feed) => feed.id);
-  const rssData = feeds.map((feed) => sendRequest(feed)
-    .then(parse)
-    .then(({ posts }) => posts.map((post) => ({ feedId: feed, ...post })))
-    .then((posts) => {
-      const newPosts = _.differenceBy(posts, model.posts, 'link');
-      model.posts = [...newPosts, ...model.posts];
-    }));
+  const rssData = model.feeds
+    .map((feed) => sendRequest(feed.url)
+      .then(parse)
+      .then(({ posts }) => posts.map((post) => ({ feedId: feed.url, ...post })))
+      .then((posts) => {
+        const newPosts = _.differenceBy(posts, model.posts, 'link');
+        model.posts = [...newPosts, ...model.posts];
+      }));
   return Promise.all(rssData)
     .finally(() => setTimeout(() => updatePosts(model, interval), interval));
+};
+
+const loadRss = (url, rssData, state) => {
+  const { title, description, posts } = rssData;
+  state.feeds = [{ url, title, description }, ...state.feeds];
+  const postsWithFeedId = posts.map((post) => {
+    const postId = _.uniqueId('');
+    return { feedId: url, postId, ...post };
+  });
+  state.posts = [...postsWithFeedId, ...state.posts];
 };
 
 const app = (translator) => {
@@ -78,8 +87,8 @@ const app = (translator) => {
     form: document.querySelector('.rss-form'),
     submitBtn: document.querySelector('.submit-button'),
     modal: document.querySelector('.modal'),
+    messageContainer: document.querySelector('.message'),
   };
-  const updateInterval = 5000;
   const state = {
     feeds: [],
     posts: [],
@@ -93,7 +102,6 @@ const app = (translator) => {
     },
     modal: {
       openedPost: null,
-      isOpen: false,
     },
     ui: {
       seenPosts: new Set(),
@@ -105,7 +113,7 @@ const app = (translator) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
-    const value = formData.get('name');
+    const value = formData.get('url');
     const error = validate(value, watched, translator);
 
     if (error) {
@@ -114,28 +122,26 @@ const app = (translator) => {
       return;
     }
 
+    watched.form.error = null;
     watched.form.status = 'read-only';
     watched.loadingProcess.status = 'loading';
 
     sendRequest(value)
-      .then((response) => {
-        const { title, description, posts } = parse(response);
-        watched.feeds = [{ id: value, title, description }, ...watched.feeds];
-        const postsWithFeedId = posts.map((post) => ({ feedId: value, ...post }));
-        watched.posts = [...postsWithFeedId, ...watched.posts];
+      .then(parse)
+      .then((data) => {
+        loadRss(value, data, watched);
         watched.loadingProcess.error = null;
-        watched.form.error = null;
         watched.form.status = 'filling';
         watched.loadingProcess.status = 'idle';
       })
       .catch((err) => {
-        if (err.message === 'parsingError') {
+        if (err.isParsingError) {
           watched.loadingProcess.error = translator('errors.noRss');
         } else {
           watched.loadingProcess.error = translator('errors.network');
         }
+        watched.form.status = 'filling';
         watched.loadingProcess.status = 'failed';
-        watched.form.status = 'failed';
       });
   });
 
@@ -149,7 +155,7 @@ const app = (translator) => {
     watched.ui.seenPosts.add(postId);
   });
 
-  updatePosts(watched, updateInterval);
+  setTimeout(() => updatePosts(watched, updateInterval), updateInterval);
 };
 
 const init = () => {
@@ -157,7 +163,7 @@ const init = () => {
   return newInstance.init({
     lng: 'ru',
     debug: false,
-    resources,
+    resources: translation(),
   }, (err, t) => app(t));
 };
 
